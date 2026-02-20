@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vindsjäl – Spelledarens Verktyg</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:        #0d1108;
+      --bg2:       #141c0e;
+      --bg3:       #1b2614;
+      --panel:     #1e2a16cc;
+      --border:    #3d5a2a55;
+      --border2:   #5a7a3a88;
+      --gold:      #c9a84c;
+      --gold2:     #e8c97a;
+      --green:     #7ab648;
+      --green2:    #a8d470;
+      --amber:     #d48b3a;
+      --red:       #c45c3a;
+      --mist:      #8fb89044;
+      --text:      #d6e8c0;
+      --text2:     #a8c490;
+      --text3:     #6a8a52;
+      --sorrow:    #2a1a3a;
+      --sorrow2:   #6a3a9a;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Crimson Pro', Georgia, serif;
+      font-size: 18px;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Animated background texture */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 20% 80%, #1a2d0a44 0%, transparent 60%),
+        radial-gradient(ellipse 60% 80% at 80% 20%, #0a1a0533 0%, transparent 60%),
+        radial-gradient(ellipse 40% 40% at 50% 50%, #2a1a0522 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Firefly particles */
+    .firefly {
+      position: fixed;
+      width: 3px;
+      height: 3px;
+      border-radius: 50%;
+      background: var(--gold2);
+      box-shadow: 0 0 6px 2px #c9a84c88;
+      pointer-events: none;
+      z-index: 1;
+      animation: float linear infinite;
+    }
+    @keyframes float {
+      0%   { transform: translate(0,0) scale(1);   opacity: 0; }
+      20%  { opacity: 0.8; }
+      80%  { opacity: 0.5; }
+      100% { transform: translate(var(--dx), var(--dy)) scale(0.5); opacity: 0; }
+    }
+
+    .wrapper {
+      position: relative;
+      z-index: 2;
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 20px 16px 60px;
+    }
+
+    /* HEADER */
+    header {
+      text-align: center;
+      padding: 40px 0 30px;
+      position: relative;
+    }
+    header::after {
+      content: '';
+      display: block;
+      margin: 20px auto 0;
+      width: 200px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    }
+    .title-main {
+      font-family: 'Cinzel Decorative', serif;
+      font-size: clamp(2rem, 6vw, 3.5rem);
+      font-weight: 700;
+      color: var(--gold2);
+      text-shadow: 0 0 40px #c9a84c66, 0 2px 4px #000;
+      letter-spacing: 0.05em;
+      line-height: 1.1;
+    }
+    .title-sub {
+      font-family: 'Crimson Pro', serif;
+      font-style: italic;
+      font-size: 1.1rem;
+      color: var(--text3);
+      margin-top: 8px;
+      letter-spacing: 0.15em;
+    }
+
+    /* TABS */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      margin: 28px 0 20px;
+      border-bottom: 1px solid var(--border2);
+      padding-bottom: 0;
+    }
+    .tab-btn {
+      background: none;
+      border: 1px solid transparent;
+      border-bottom: none;
+      color: var(--text3);
+      font-family: 'Crimson Pro', serif;
+      font-size: 1rem;
+      letter-spacing: 0.08em;
+      padding: 8px 18px;
+      cursor: pointer;
+      border-radius: 6px 6px 0 0;
+      transition: all 0.2s;
+      position: relative;
+      bottom: -1px;
+    }
+    .tab-btn:hover { color: var(--text2); border-color: var(--border); }
+    .tab-btn.active {
+      color: var(--gold2);
+      border-color: var(--border2);
+      background: var(--bg2);
+      border-bottom-color: var(--bg2);
+    }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+    /* PANELS */
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border2);
+      border-radius: 10px;
+      padding: 20px;
+      backdrop-filter: blur(4px);
+    }
+    .panel + .panel { margin-top: 16px; }
+    .panel-title {
+      font-family: 'Cinzel Decorative', serif;
+      font-size: 0.75rem;
+      letter-spacing: 0.2em;
+      color: var(--gold);
+      text-transform: uppercase;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .panel-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, var(--border2), transparent);
+    }
+
+    /* AMBIENT SCENES */
+    .scenes-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 10px;
+    }
+    .scene-btn {
+      background: var(--bg3);
+      border: 1px solid var(--border2);
+      border-radius: 8px;
+      color: var(--text2);
+      font-family: 'Crimson Pro', serif;
+      font-size: 0.95rem;
+      padding: 14px 10px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.25s;
+      line-height: 1.3;
+    }
+    .scene-btn .scene-icon { font-size: 1.6rem; display: block; margin-bottom: 6px; }
+    .scene-btn:hover { border-color: var(--green); color: var(--green2); background: #1e2e14; }
+    .scene-btn.playing {
+      border-color: var(--gold);
+      color: var(--gold2);
+      background: #2a2010;
+      box-shadow: 0 0 16px #c9a84c22;
+    }
+    .scene-btn.sorrow-scene.playing {
+      border-color: var(--sorrow2);
+      color: #c8a0f0;
+      background: #1a0a2a;
+      box-shadow: 0 0 16px #6a3a9a44;
+    }
+
+    /* Volume + Now Playing */
+    .playback-bar {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-top: 14px;
+      flex-wrap: wrap;
+    }
+    .now-playing {
+      font-style: italic;
+      color: var(--text3);
+      font-size: 0.95rem;
+      flex: 1;
+      min-width: 120px;
+    }
+    .now-playing span { color: var(--gold); }
+    input[type=range] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 120px;
+      height: 4px;
+      border-radius: 2px;
+      background: var(--border2);
+      outline: none;
+      cursor: pointer;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px; height: 14px;
+      border-radius: 50%;
+      background: var(--gold);
+      cursor: pointer;
+    }
+    .vol-label { font-size: 0.85rem; color: var(--text3); }
+
+    /* SOUNDBOARD */
+    .sfx-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 10px;
+    }
+    .sfx-btn {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text2);
+      font-family: 'Crimson Pro', serif;
+      font-size: 1rem;
+      padding: 12px 10px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.15s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+    .sfx-btn .sfx-icon { font-size: 1.4rem; }
+    .sfx-btn:hover { border-color: var(--amber); color: var(--gold2); background: #221a0e; }
+    .sfx-btn:active { transform: scale(0.95); }
+
+    /* GM TOOLS */
+    .gm-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 600px) { .gm-grid { grid-template-columns: 1fr; } }
+
+    /* Initiative Tracker */
+    .initiative-list { list-style: none; }
+    .initiative-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 10px;
+      border-radius: 6px;
+      margin-bottom: 6px;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      transition: all 0.2s;
+    }
+    .initiative-item.current {
+      border-color: var(--gold);
+      background: #2a2010;
+      box-shadow: 0 0 10px #c9a84c22;
+    }
+    .initiative-item .init-num {
+      font-family: 'Cinzel Decorative', serif;
+      font-size: 1rem;
+      color: var(--gold);
+      width: 28px;
+      text-align: center;
+    }
+    .initiative-item .init-name { flex: 1; color: var(--text); }
+    .initiative-item .init-hp { color: var(--green); font-size: 0.9rem; }
+    .btn-small {
+      background: none;
+      border: 1px solid var(--border2);
+      color: var(--text3);
+      border-radius: 4px;
+      padding: 2px 8px;
+      cursor: pointer;
+      font-family: 'Crimson Pro', serif;
+      font-size: 0.9rem;
+      transition: all 0.15s;
+    }
+    .btn-small:hover { border-color: var(--gold); color: var(--gold); }
+    .btn-small.danger:hover { border-color: var(--red); color: var(--red); }
+
+    .add-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+    .add-row input {
+      background: var(--bg3);
+      border: 1px solid var(--border2);
+      color: var(--text);
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-family: 'Crimson Pro', serif;
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .add-row input:focus { border-color: var(--gold); }
+    .add-row input.name-input { flex: 2; min-width: 80px; }
+    .add-row input.num-input { flex: 1; min-width: 50px; max-width: 70px; }
+    .btn-add {
+      background: var(--bg3);
+      border: 1px solid var(--border2);
+      color: var(--gold);
+      border-radius: 6px;
+      padding: 6px 14px;
+      cursor: pointer;
+      font-family: 'Crimson Pro', serif;
+      font-size: 1rem;
+      transition: all 0.15s;
+    }
+    .btn-add:hover { background: #2a2010; border-color: var(--gold); }
+
+    .next-btn {
+      width: 100%;
+      margin-top: 12px;
+      background: none;
+      border: 1px solid var(--border2);
+      color: var(--text2);
+      border-radius: 6px;
+      padding: 8px;
+      cursor: pointer;
+      font-family: 'Crimson Pro', serif;
+      font-size: 1rem;
+      transition: all 0.2s;
+      letter-spacing: 0.05em;
+    }
+    .next-btn:hover { border-color: var(--gold2); color: var(--gold2); }
+
+    /* HP Tracker */
+    .hp-list { list-style: none; }
+    .hp-item {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px 10px;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .hp-name { flex: 1; min-width: 80px; color: var(--text); }
+    .hp-bar-wrap { flex: 2; min-width: 80px; }
+    .hp-bar-bg {
+      height: 8px;
+      border-radius: 4px;
+      background: var(--border);
+      overflow: hidden;
+    }
+    .hp-bar-fill {
+      height: 100%;
+      border-radius: 4px;
+      background: linear-gradient(90deg, var(--red), var(--amber), var(--green));
+      transition: width 0.3s ease;
+    }
+    .hp-text { font-size: 0.9rem; color: var(--text3); margin-top: 2px; }
+    .hp-controls { display: flex; gap: 4px; align-items: center; }
+    .hp-controls input {
+      width: 44px;
+      background: var(--bg3);
+      border: 1px solid var(--border2);
+      color: var(--text);
+      border-radius: 4px;
+      padding: 3px 6px;
+      font-family: 'Crimson Pro', serif;
+      font-size: 0.9rem;
+      text-align: center;
+      outline: none;
+    }
+
+    /* Notes */
+    .notes-area {
+      width: 100%;
+      min-height: 120px;
+      background: var(--bg3);
+      border: 1px solid var(--border2);
+      color: var(--text);
+      border-radius: 8px;
+      padding: 12px;
+      font-family: 'Crimson Pro', serif;
+      font-size: 1rem;
+      resize: vertical;
+      outline: none;
+      line-height: 1.6;
+      transition: border-color 0.2s;
+    }
+    .notes-area:focus { border-color: var(--gold); }
+    .notes-area::placeholder { color: var(--text3); font-style: italic; }
+
+    /* Toast */
+    #toast {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: var(--bg2);
+      border: 1px solid var(--gold);
+      color: var(--gold2);
+      font-family: 'Crimson Pro', serif;
+      font-style: italic;
+      padding: 8px 20px;
+      border-radius: 20px;
+      font-size: 0.95rem;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 999;
+      transition: all 0.3s;
+    }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+<!-- Fireflies -->
+<div id="fireflies"></div>
+
+<div class="wrapper">
+  <header>
+    <div class="title-main">Vindsjäl</div>
+    <div class="title-sub">Spelledarens Verktyg</div>
+  </header>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('music')">🎵 Musik</button>
+    <button class="tab-btn" onclick="switchTab('sfx')">🔊 Ljud</button>
+    <button class="tab-btn" onclick="switchTab('gm')">⚔️ Spelledare</button>
+  </div>
+
+  <!-- MUSIC TAB -->
+  <div class="tab-panel active" id="tab-music">
+    <div class="panel">
+      <div class="panel-title">Stämningsljud & Platser</div>
+      <div class="scenes-grid" id="scenesGrid"></div>
+      <div class="playback-bar">
+        <div class="now-playing" id="nowPlaying">Inget spelas just nu</div>
+        <span class="vol-label">🔉</span>
+        <input type="range" id="ambientVol" min="0" max="100" value="60" oninput="setAmbientVol(this.value)" />
+        <button class="btn-small danger" onclick="stopAmbient()">Stopp</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SFX TAB -->
+  <div class="tab-panel" id="tab-sfx">
+    <div class="panel">
+      <div class="panel-title">Ljudeffekter</div>
+      <div class="sfx-grid" id="sfxGrid"></div>
+      <div class="playback-bar" style="margin-top:14px">
+        <span class="vol-label">🔉 Volym:</span>
+        <input type="range" id="sfxVol" min="0" max="100" value="80" oninput="setSfxVol(this.value)" />
+      </div>
+    </div>
+  </div>
+
+  <!-- GM TAB -->
+  <div class="tab-panel" id="tab-gm">
+    <div class="gm-grid">
+
+      <!-- Initiative -->
+      <div class="panel">
+        <div class="panel-title">Initiativordning</div>
+        <ul class="initiative-list" id="initList"></ul>
+        <div class="add-row">
+          <input class="name-input" id="initName" placeholder="Namn…" />
+          <input class="num-input" id="initNum" type="number" placeholder="Init" />
+          <input class="num-input" id="initHp" type="number" placeholder="HP" />
+          <button class="btn-add" onclick="addInitiative()">+</button>
+        </div>
+        <button class="next-btn" onclick="nextTurn()">▶ Nästa tur</button>
+      </div>
+
+      <!-- HP Tracker -->
+      <div class="panel">
+        <div class="panel-title">Livspoäng</div>
+        <ul class="hp-list" id="hpList"></ul>
+        <div class="add-row">
+          <input class="name-input" id="hpName" placeholder="Namn…" />
+          <input class="num-input" id="hpMax" type="number" placeholder="Max HP" />
+          <button class="btn-add" onclick="addHpTracker()">+</button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Notes -->
+    <div class="panel" style="margin-top:16px">
+      <div class="panel-title">Spelledarens Anteckningar</div>
+      <textarea class="notes-area" id="notes" placeholder="Anteckna platser, NPC-namn, hemligheter, ledtrådar…" oninput="saveNotes()"></textarea>
+    </div>
+  </div>
+
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ─── FIREFLIES ───────────────────────────────────────────────
+const ffContainer = document.getElementById('fireflies');
+for (let i = 0; i < 18; i++) {
+  const ff = document.createElement('div');
+  ff.className = 'firefly';
+  const x = Math.random() * 100, y = Math.random() * 100;
+  const dx = (Math.random() - 0.5) * 200, dy = (Math.random() - 0.5) * 200;
+  const dur = 6 + Math.random() * 10;
+  const delay = Math.random() * 12;
+  ff.style.cssText = `left:${x}vw;top:${y}vh;--dx:${dx}px;--dy:${dy}px;animation-duration:${dur}s;animation-delay:${delay}s`;
+  ffContainer.appendChild(ff);
+}
+
+// ─── TABS ────────────────────────────────────────────────────
+function switchTab(id) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// ─── TOAST ───────────────────────────────────────────────────
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// ─── AUDIO ENGINE ────────────────────────────────────────────
+// We use Web Audio API + freely licensed ambient sound URLs from freesound proxied via direct embed
+// For demo we use oscillator-based generated tones since we can't guarantee external URLs
+// In production you'd swap these with real audio file URLs
+
+const ctx = new (window.AudioContext || window.webkitAudioContext)();
+let ambientSource = null, ambientGain = null;
+let currentScene = null;
+let sfxVolume = 0.8;
+let ambientVolume = 0.6;
+
+// ─── AMBIENT SCENES ──────────────────────────────────────────
+const scenes = [
+  { id: 'ruins',    icon: '🏛️', label: 'Djungelruiner',     color: '#7ab648', sorrow: false,
+    desc: 'Distant birds, rustling leaves, ancient stone…',
+    freqs: [80, 120, 200], type: 'jungle' },
+  { id: 'village',  icon: '🔥', label: 'Stamby',             color: '#d48b3a', sorrow: false,
+    desc: 'Crackling fire, distant chatter, warmth…',
+    freqs: [60, 100, 180], type: 'fire' },
+  { id: 'explore',  icon: '🌿', label: 'Utforskning',        color: '#5a9a40', sorrow: false,
+    desc: 'Gentle wind, soft mystery, wonder…',
+    freqs: [90, 140, 220], type: 'wind' },
+  { id: 'sorrow',   icon: '🌑', label: 'Sorgens Närvaro',   color: '#6a3a9a', sorrow: true,
+    desc: 'Deep unease, wrongness, darkness…',
+    freqs: [40, 70, 110], type: 'sorrow' },
+  { id: 'campfire', icon: '✨', label: 'Vila vid Lägereld', color: '#c9a84c', sorrow: false,
+    desc: 'Soft crackling, crickets, peaceful rest…',
+    freqs: [70, 110, 160], type: 'fire' },
+  { id: 'storm',    icon: '🌧️', label: 'Storm & Regn',      color: '#4a7a9a', sorrow: false,
+    desc: 'Heavy rain, rolling thunder, wind…',
+    freqs: [50, 90, 150], type: 'rain' },
+];
+
+function buildAmbientNodes(scene) {
+  const master = ctx.createGain();
+  master.gain.value = 0;
+  master.connect(ctx.destination);
+
+  const nodes = [];
+
+  if (scene.type === 'sorrow') {
+    // Dark drone
+    [40, 47, 53].forEach((f, i) => {
+      const osc = ctx.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.value = f;
+      const g = ctx.createGain();
+      g.gain.value = 0.12 - i * 0.03;
+      osc.connect(g); g.connect(master);
+      osc.start();
+      nodes.push(osc);
+    });
+    // Tremolo
+    const lfo = ctx.createOscillator();
+    lfo.frequency.value = 0.3;
+    const lfoG = ctx.createGain();
+    lfoG.gain.value = 0.08;
+    lfo.connect(lfoG); lfoG.connect(master.gain);
+    lfo.start(); nodes.push(lfo);
+  } else if (scene.type === 'fire') {
+    // Warm crackling simulation via noise
+    const bufSize = ctx.sampleRate * 2;
+    const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < bufSize; i++) data[i] = (Math.random() * 2 - 1) * 0.4;
+    const src = ctx.createBufferSource();
+    src.buffer = buf; src.loop = true;
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'lowpass'; filter.frequency.value = 400;
+    src.connect(filter); filter.connect(master);
+    src.start(); nodes.push(src);
+    // Soft harmonic
+    [220, 330].forEach(f => {
+      const o = ctx.createOscillator();
+      o.type = 'sine'; o.frequency.value = f;
+      const g = ctx.createGain(); g.gain.value = 0.03;
+      o.connect(g); g.connect(master); o.start(); nodes.push(o);
+    });
+  } else if (scene.type === 'rain') {
+    const bufSize = ctx.sampleRate * 2;
+    const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < bufSize; i++) data[i] = Math.random() * 2 - 1;
+    const src = ctx.createBufferSource();
+    src.buffer = buf; src.loop = true;
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'bandpass'; filter.frequency.value = 1200; filter.Q.value = 0.5;
+    const g = ctx.createGain(); g.gain.value = 0.5;
+    src.connect(filter); filter.connect(g); g.connect(master);
+    src.start(); nodes.push(src);
+  } else if (scene.type === 'wind') {
+    const bufSize = ctx.sampleRate * 2;
+    const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < bufSize; i++) data[i] = (Math.random() * 2 - 1) * 0.3;
+    const src = ctx.createBufferSource();
+    src.buffer = buf; src.loop = true;
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'lowpass'; filter.frequency.value = 600;
+    src.connect(filter); filter.connect(master);
+    src.start(); nodes.push(src);
+    // Gentle melody
+    [261, 329, 392, 261].forEach((f, i) => {
+      const o = ctx.createOscillator();
+      o.type = 'sine'; o.frequency.value = f;
+      const g = ctx.createGain(); g.gain.value = 0.025;
+      o.connect(g); g.connect(master); o.start(); nodes.push(o);
+    });
+  } else {
+    // jungle
+    const bufSize = ctx.sampleRate * 2;
+    const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < bufSize; i++) data[i] = (Math.random() * 2 - 1) * 0.15;
+    const src = ctx.createBufferSource();
+    src.buffer = buf; src.loop = true;
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'bandpass'; filter.frequency.value = 800; filter.Q.value = 1;
+    src.connect(filter); filter.connect(master);
+    src.start(); nodes.push(src);
+    // Bird-like harmonics
+    [523, 659, 784].forEach((f, i) => {
+      const o = ctx.createOscillator();
+      o.type = 'sine'; o.frequency.value = f;
+      const g = ctx.createGain(); g.gain.value = 0.02;
+      o.connect(g); g.connect(master); o.start(); nodes.push(o);
+    });
+  }
+
+  return { master, nodes };
+}
+
+let ambientNodes = null;
+
+function playScene(id) {
+  if (ctx.state === 'suspended') ctx.resume();
+  stopAmbient(true);
+  const scene = scenes.find(s => s.id === id);
+  if (!scene) return;
+  currentScene = id;
+
+  ambientNodes = buildAmbientNodes(scene);
+  ambientNodes.master.gain.setTargetAtTime(ambientVolume, ctx.currentTime, 0.5);
+
+  document.querySelectorAll('.scene-btn').forEach(b => b.classList.remove('playing'));
+  const btn = document.querySelector(`[data-scene="${id}"]`);
+  if (btn) btn.classList.add('playing');
+  document.getElementById('nowPlaying').innerHTML = `Spelar: <span>${scene.label}</span>`;
+  toast(`${scene.icon} ${scene.label}`);
+}
+
+function stopAmbient(silent = false) {
+  if (ambientNodes) {
+    ambientNodes.master.gain.setTargetAtTime(0, ctx.currentTime, 0.3);
+    const n = ambientNodes.nodes;
+    setTimeout(() => n.forEach(nd => { try { nd.stop(); } catch(e){} }), 800);
+    ambientNodes = null;
+  }
+  currentScene = null;
+  document.querySelectorAll('.scene-btn').forEach(b => b.classList.remove('playing'));
+  document.getElementById('nowPlaying').innerHTML = 'Inget spelas just nu';
+  if (!silent) toast('Musik stoppad');
+}
+
+function setAmbientVol(v) {
+  ambientVolume = v / 100;
+  if (ambientNodes) ambientNodes.master.gain.setTargetAtTime(ambientVolume, ctx.currentTime, 0.1);
+}
+function setSfxVol(v) { sfxVolume = v / 100; }
+
+// Build scene buttons
+const scenesGrid = document.getElementById('scenesGrid');
+scenes.forEach(s => {
+  const btn = document.createElement('button');
+  btn.className = 'scene-btn' + (s.sorrow ? ' sorrow-scene' : '');
+  btn.setAttribute('data-scene', s.id);
+  btn.innerHTML = `<span class="scene-icon">${s.icon}</span>${s.label}`;
+  btn.onclick = () => currentScene === s.id ? stopAmbient() : playScene(s.id);
+  scenesGrid.appendChild(btn);
+});
+
+// ─── SOUND EFFECTS ───────────────────────────────────────────
+const sfxDefs = [
+  { icon: '🥁', label: 'Trumslag',       fn: sfxDrum },
+  { icon: '🌀', label: 'Mystiskt Sus',   fn: sfxMystery },
+  { icon: '🦜', label: 'Djungelskrik',   fn: sfxScream },
+  { icon: '🔥', label: 'Eldknaster',     fn: sfxFire },
+  { icon: '🪨', label: 'Gamla Stenar',   fn: sfxStone },
+  { icon: '✨', label: 'Seger / Lättnad',fn: sfxVictory },
+  { icon: '💀', label: 'Varning!',        fn: sfxDanger },
+  { icon: '🌊', label: 'Vattendrag',     fn: sfxWater },
+];
+
+function sfxDrum() {
+  if (ctx.state === 'suspended') ctx.resume();
+  const g = ctx.createGain(); g.gain.value = sfxVolume;
+  g.connect(ctx.destination);
+  const osc = ctx.createOscillator();
+  osc.frequency.setValueAtTime(180, ctx.currentTime);
+  osc.frequency.exponentialRampToValueAtTime(40, ctx.currentTime + 0.3);
+  osc.type = 'sine';
+  const env = ctx.createGain();
+  env.gain.setValueAtTime(1, ctx.currentTime);
+  env.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+  osc.connect(env); env.connect(g);
+  osc.start(); osc.stop(ctx.currentTime + 0.5);
+  // noise hit
+  const buf = ctx.createBuffer(1, ctx.sampleRate * 0.1, ctx.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i=0;i<d.length;i++) d[i] = Math.random()*2-1;
+  const ns = ctx.createBufferSource(); ns.buffer = buf;
+  const ng = ctx.createGain(); ng.gain.value = 0.3;
+  ns.connect(ng); ng.connect(g); ns.start();
+}
+
+function sfxMystery() {
+  if (ctx.state === 'suspended') ctx.resume();
+  const g = ctx.createGain(); g.gain.value = sfxVolume * 0.7; g.connect(ctx.destination);
+  [523, 659, 784, 1047].forEach((f, i) => {
+    const osc = ctx.createOscillator();
+    osc.type = 'sine'; osc.frequency.value = f;
+    const env = ctx.createGain();
+    const t = ctx.currentTime + i * 0.15;
+    env.gain.setValueAtTime(0, t);
+    env.gain.linearRampToValueAtTime(0.15, t + 0.1);
+    env.gain.exponentialRampToValueAtTime(0.001, t + 1.2);
+    osc.connect(env); env.connect(g);
+    osc.start(t); osc.stop(t + 1.2);
+  });
+}
+
+function sfxScream() {
+  if (ctx.state === 'suspended') ctx.resume();
+  const g = ctx.createGain(); g.gain.value = sfxVolume * 0.8; g.connect(ctx.destination);
+  const osc = ctx.createOscillator();
+  osc.type = 'sawtooth';
+  osc.frequency.setValueAtTime(800, ctx.currentTime);
+  osc.frequency.linearRampToValueAtTime(1600, ctx.currentTime + 0.1);
+  osc.frequency.exponentialRampToValueAtTime(400, ctx.currentTime + 0.6);
+  const env = ctx.createGain();
+  env.gain.setValueAtTime(0.4, ctx.currentTime);
+  env.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.7);
+  const filter = ctx.createBiquadFilter(); filter.type = 'bandpass'; filter.frequency.value = 1200;
+  osc.connect(filter); filter.connect(env); env.connect(g);
+  osc.start(); osc.stop(ctx.currentTime + 0.7);
+}
+
+function sfxFire() {
+  if (ctx.state === 'suspended') ctx.resume();
+  const g = ctx.createGain(); g.gain.value = sfxVolume * 0.5; g.connect(ctx.destination);
+  const buf = ctx.createBuffer(1, ctx.sampleRate * 0.8, ctx.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i=0;i<d.length;i++) d[i] = (Math.random()*2-1) * Math.exp(-i/(ctx.sampleRate*0.3));
+  const src = ctx.createBufferSource(); src.buffer = buf;
+  const filter = ctx.createBiquadFilter(); filter.type='lowpass'; filter.frequency.value=600;
+  src.connect(filter); filter.connect(g); src.start();
+}
+
+function sfxStone() {
+  if (ctx.state === 'suspended') ctx.resume();
+  const g = ctx.createGain(); g.gain.value = sfxVolume * 0.6; g.connect(ctx.destination);
+  const buf = ctx.createBuffer(1, ctx.sampleRate * 1.5, ctx.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i=0;i<d.length;i++) {
+    const t = i/ctx.sampleRate;
+    d[i] = (Math.random()*2-1) * 0.5 * Math.exp(-t*1.5) + Math.sin(2*Math.PI*60*t)*0.3*Math.exp(-t*2);
+  }
+  const src = ctx.createBufferSource(); src.buffer = buf;
+  const filter = ctx.createBiquadFilter(); filter.type='lowpass'; filter.frequency.value=300;
+  src.connect(filter); filter.connect(g); src.start();
+}
+
+function sfxVictory() {
+  if (ctx.state === 'suspended') ctx.resume();
+  const g = ctx.createGain(); g.gain.value = sfxVolume * 0.6; g.connect(ctx.destination);
+  const melody = [392, 523, 659, 784];
+  melody.forEach((f, i) => {
+    const osc = ctx.createOscillator();
+    osc.type = 'sine'; osc.frequency.value = f;
+    const env = ctx.createGain();
+    const t = ctx.currentTime + i * 0.2;
+    env.gain.setValueAtTime(0, t);
+    env.gain.linearRampToValueAtTime(0.25, t + 0.05);
+    env.gain.exponentialRampToValueAtTime(0.001, t + 0.9);
+    osc.connect(env); env.connect(g);
+    osc.start(t); osc.stop(t + 0.9);
+  });
+}
+
+function sfxDanger() {
+  if (ctx.state === 'suspended') ctx.resume();
+  const g = ctx.createGain(); g.gain.value = sfxVolume * 0.7; g.connect(ctx.destination);
+  [110, 73].forEach((f, i) => {
+    const osc = ctx.createOscillator();
+    osc.type = 'sawtooth'; osc.frequency.value = f;
+    const env = ctx.createGain();
+    const t = ctx.currentTime + i * 0.25;
+    env.gain.setValueAtTime(0.3, t);
+    env.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
+    osc.connect(env); env.connect(g);
+    osc.start(t); osc.stop(t + 0.5);
+  });
+}
+
+function sfxWater() {
+  if (ctx.state === 'suspended') ctx.resume();
+  const g = ctx.createGain(); g.gain.value = sfxVolume * 0.4; g.connect(ctx.destination);
+  const buf = ctx.createBuffer(1, ctx.sampleRate * 1.5, ctx.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i=0;i<d.length;i++) d[i] = Math.random()*2-1;
+  const src = ctx.createBufferSource(); src.buffer = buf;
+  const filter = ctx.createBiquadFilter(); filter.type='bandpass'; filter.frequency.value=1600; filter.Q.value=0.8;
+  const env = ctx.createGain();
+  const dur = 1.5;
+  env.gain.setValueAtTime(0,ctx.currentTime);
+  env.gain.linearRampToValueAtTime(0.6, ctx.currentTime+0.2);
+  env.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+dur);
+  src.connect(filter); filter.connect(env); env.connect(g); src.start();
+}
+
+// Build sfx buttons
+const sfxGrid = document.getElementById('sfxGrid');
+sfxDefs.forEach(s => {
+  const btn = document.createElement('button');
+  btn.className = 'sfx-btn';
+  btn.innerHTML = `<span class="sfx-icon">${s.icon}</span>${s.label}`;
+  btn.onclick = s.fn;
+  sfxGrid.appendChild(btn);
+});
+
+// ─── INITIATIVE TRACKER ──────────────────────────────────────
+let initiatives = [];
+let currentTurn = 0;
+
+function addInitiative() {
+  const name = document.getElementById('initName').value.trim();
+  const init = parseInt(document.getElementById('initNum').value) || 0;
+  const hp = parseInt(document.getElementById('initHp').value) || 10;
+  if (!name) return;
+  initiatives.push({ name, init, hp, maxHp: hp });
+  initiatives.sort((a,b) => b.init - a.init);
+  currentTurn = 0;
+  document.getElementById('initName').value = '';
+  document.getElementById('initNum').value = '';
+  document.getElementById('initHp').value = '';
+  renderInitiative();
+}
+
+function removeInitiative(idx) {
+  initiatives.splice(idx, 1);
+  if (currentTurn >= initiatives.length) currentTurn = 0;
+  renderInitiative();
+}
+
+function nextTurn() {
+  if (!initiatives.length) return;
+  currentTurn = (currentTurn + 1) % initiatives.length;
+  renderInitiative();
+  toast(`${initiatives[currentTurn].name}s tur`);
+}
+
+function renderInitiative() {
+  const list = document.getElementById('initList');
+  list.innerHTML = '';
+  initiatives.forEach((c, i) => {
+    const li = document.createElement('li');
+    li.className = 'initiative-item' + (i === currentTurn ? ' current' : '');
+    li.innerHTML = `
+      <span class="init-num">${c.init}</span>
+      <span class="init-name">${c.name}</span>
+      <span class="init-hp">❤️ ${c.hp}/${c.maxHp}</span>
+      <button class="btn-small danger" onclick="removeInitiative(${i})">✕</button>
+    `;
+    list.appendChild(li);
+  });
+}
+
+// ─── HP TRACKER ──────────────────────────────────────────────
+let hpTrackers = [];
+
+function addHpTracker() {
+  const name = document.getElementById('hpName').value.trim();
+  const max = parseInt(document.getElementById('hpMax').value) || 10;
+  if (!name) return;
+  hpTrackers.push({ name, hp: max, max });
+  document.getElementById('hpName').value = '';
+  document.getElementById('hpMax').value = '';
+  renderHp();
+}
+
+function changeHp(idx, delta) {
+  hpTrackers[idx].hp = Math.max(0, Math.min(hpTrackers[idx].max, hpTrackers[idx].hp + delta));
+  renderHp();
+}
+
+function renderHp() {
+  const list = document.getElementById('hpList');
+  list.innerHTML = '';
+  hpTrackers.forEach((h, i) => {
+    const pct = (h.hp / h.max) * 100;
+    const li = document.createElement('li');
+    li.className = 'hp-item';
+    li.innerHTML = `
+      <span class="hp-name">${h.name}</span>
+      <div class="hp-bar-wrap">
+        <div class="hp-bar-bg"><div class="hp-bar-fill" style="width:${pct}%"></div></div>
+        <div class="hp-text">${h.hp} / ${h.max}</div>
+      </div>
+      <div class="hp-controls">
+        <button class="btn-small" onclick="changeHp(${i},-1)">−</button>
+        <input type="number" value="${h.hp}" onchange="setHp(${i},this.value)" style="width:44px;background:var(--bg3);border:1px solid var(--border2);color:var(--text);border-radius:4px;padding:3px 6px;font-size:0.9rem;text-align:center;outline:none;" />
+        <button class="btn-small" onclick="changeHp(${i},1)">+</button>
+        <button class="btn-small danger" onclick="removeHp(${i})">✕</button>
+      </div>
+    `;
+    list.appendChild(li);
+  });
+}
+
+function setHp(idx, val) {
+  hpTrackers[idx].hp = Math.max(0, Math.min(hpTrackers[idx].max, parseInt(val) || 0));
+  renderHp();
+}
+function removeHp(idx) { hpTrackers.splice(idx,1); renderHp(); }
+
+// ─── NOTES (localStorage) ────────────────────────────────────
+const notesEl = document.getElementById('notes');
+notesEl.value = localStorage.getItem('vindsjal_notes') || '';
+function saveNotes() { localStorage.setItem('vindsjal_notes', notesEl.value); }
+
+// Enter key shortcuts for initiative/hp
+document.getElementById('initHp').addEventListener('keydown', e => { if(e.key==='Enter') addInitiative(); });
+document.getElementById('hpMax').addEventListener('keydown', e => { if(e.key==='Enter') addHpTracker(); });
+</script>
+</body>
+</html>
